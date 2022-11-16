@@ -4,3 +4,82 @@ author: "Justin Vargas"
 date: "2022-11-15"
 output: github_document
 ---
+#Loading Libraries 
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(broom)
+```
+
+# Problem 3
+set.seed (1)
+
+sim_function = function(n = 30, mu, sigma = 5) {
+  
+  x = rnorm(n, mean = mu, sd = sigma)
+  t_test = t.test(x = x, alternative = "two.sided", conf.level = 0.95) %>%
+    tidy() %>%
+    select(estimate, p.value)
+} 
+
+
+mu_0_sim = rerun(50, sim_function(mu = 0)) %>%
+bind_rows()
+
+mu_sim = tibble(mu = c(0,1,2,3,4,5,6)) %>%
+  mutate(output = map(.x = mu, ~rerun(5, sim_function(mu = .x))),
+         result = map(output, bind_rows)) %>%
+  select(-output) %>%
+  unnest()
+  
+  mu_sim
+  
+null_reject_plot = 
+  mu_sim %>%
+  group_by(mu) %>%
+  summarize(number = n(),
+  p_value = sum(p.value < 0.05),
+  proportion_null_reject = p_value/number) %>%
+  ggplot(aes(x = mu, y = proportion_null_reject)) + 
+  geom_point() +
+  labs(
+    x = "True Mean", 
+    y = "Proportion of Times the Null Hypothesis was Rejected"
+  )
+
+null_reject_plot
+
+average_true_mean_plot = 
+  mu_sim %>%
+  group_by(mu) %>%
+  summarize(estimate_average = mean(estimate)) %>%
+  ggplot(aes(x = mu, y = estimate_average)) + 
+  geom_point() +
+  labs(
+    x = "True Mean", 
+    y = "Average Estimated Mean", 
+    title = "Average Estimated Mean vs. True Mean For All Samples"
+  )
+
+average_true_mean_plot 
+
+average_null_reject_plot =
+  mu_sim %>%
+  filter(p.value < 0.05) %>%
+  group_by(mu) %>%
+  summarize(estimate_average = mean(estimate)) %>%
+  ggplot(aes(x = mu, y = estimate_average)) + 
+  geom_point() +
+  labs(
+    x = "True Mean", 
+    y = "Average Estimated Mean",
+    title = "Average Estimated Mean vs. True Mean For Rejected Null Hypothesis Samples"
+  )
+  
+average_null_reject_plot
+
+
+
+
+
