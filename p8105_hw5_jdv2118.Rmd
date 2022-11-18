@@ -1,16 +1,16 @@
 ---
 title: "p8105_hw5_jdv2118"
 author: "Justin Vargas"
-date: "2022-11-15"
 output: github_document
 ---
 #Loading Libraries 
 
-```{r}
+```{r, message = FALSE}
 library(tidyverse)
 library(dplyr)
 library(broom)
 ```
+
 # Problem 3
 
 The following code is used to create a simulation function with the following design elements of n = 30 and sigma = 5.
@@ -30,22 +30,27 @@ The following code is a simulation of when mu = 0, 5000 datasets are generated b
 ```{r}
 mu_0_simulation = rerun(5000, simulation_function(mu = 0)) %>%
 bind_rows()
+
+mu_0_simulation
 ```
 
 The following code is a simulation for when mu is equal to 0 through 6, 5000 datasets are generated for each mu, and the estimate and p-value are obtained from a one-sample t-test.
 
-```{r}
+```{r, message = FALSE}
 mu_sim = tibble(mu = c(0,1,2,3,4,5,6)) %>%
   mutate(output = map(.x = mu, ~rerun(5000,
   simulation_function(mu = .x))),
   result = map(output, bind_rows)) %>%
   select(-output) %>%
   unnest()
+
+mu_sim
 ```
 
 ## Plot 1
 
 The following code is used to produce a plot that shows the proportion of times the null hypothesis was rejected and the true value of mu.  Based on the plot, one can observe that as the true mean increases, the power also increases.  Additionally, as the true mean increases, the effect size also increases.  Please note that the proportion of times the null hypothesis was rejected becomes relatively stable at around 1 for a true mean of 4, 5, and 6.
+
 ```{r}
 null_reject_plot = 
   mu_sim %>%
