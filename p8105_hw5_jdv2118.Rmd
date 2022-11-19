@@ -3,7 +3,7 @@ title: "p8105_hw5_jdv2118"
 author: "Justin Vargas"
 output: github_document
 ---
-# Loading Libraries and figure options
+# Loading Libraries and Figure Options
 
 ```{r, message = FALSE, warning = FALSE}
 
@@ -71,6 +71,81 @@ tidy_df %>%
 ```
 
 This plot suggests high within-subject correlation -- subjects who start above average end up above average, and those that start below average end up below average. Subjects in the control group generally don't change over time, but those in the experiment group increase their outcome in a roughly linear way. 
+
+# Problem 2
+
+```{r, message = FALSE}
+raw_data = 
+  read_csv("data/homicide_data.csv") 
+
+homicide =
+  raw_data %>% 
+  mutate(
+    city_state = str_c(city, state, sep = ", "),
+    result = case_when(
+      disposition == "Closed without arrest" ~ "unsolved",
+      disposition == "Closed by arrest" ~ "solved",
+      disposition == "Open/No arrest" ~ "unsolved")
+  ) %>% 
+  select(city_state, result) %>% 
+  filter(city_state != "Tulsa, AL")
+```
+
+The raw data consists of `r ncol(raw_data)` variables, which are uid, reported_date, victim_last, victim_first, victim_race, victim_age, victim_sex, city, state, lat, lon, and disposition.  The raw data also consists of `r nrow(raw_data)` rows.
+
+The following code is used to create a new dataframe with two new variables, unsolved_homicides and total_homicides, which entail the number of unsolved homicides and the total number of homicides, respectively.
+
+```{r, message = FALSE}
+homicide_info = 
+  homicide %>% 
+  group_by(city_state) %>% 
+  summarize(
+    unsolved_homicides = sum(result == "unsolved"),
+    total_homicides = n()
+  )
+```
+
+The following code is used to estimate the proportion of homicides that are unsolved for Baltimore, MD, through the use of a prop.test.
+
+```{r, message = FALSE}
+prop.test(
+  homicide_info %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  pull(unsolved_homicides), 
+  homicide_info %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  pull(total_homicides)) %>% 
+  tidy()
+```
+
+```{r, message = FALSE}
+results = 
+  homicide_info %>% 
+  mutate(
+    prop_tests = map2(.x = unsolved_homicides, .y = total_homicides,          ~prop.test(x = .x, n = .y)),
+    tidy_tests = map(.x = prop_tests, ~tidy(.x))
+  ) %>% 
+  select(-prop_tests) %>% 
+  unnest(tidy_tests) %>% 
+  select(city_state, estimate, conf.low, conf.high)
+
+results
+```
+
+```{r, message = FALSE}
+homicide_plot =
+  results %>% 
+  mutate(city_state = fct_reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(
+    x = "City and State", 
+    y = "Estimate",
+)
+
+homicide_plot
+```
 
 # Problem 3
 
