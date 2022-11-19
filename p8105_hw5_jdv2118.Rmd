@@ -5,7 +5,8 @@ output: github_document
 ---
 # Loading Libraries and figure options
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
+
 library(tidyverse)
 
 library(dplyr)
@@ -32,7 +33,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 The code chunk below imports the data in individual spreadsheets contained in `./data/zip_data/`. To do this, I create a dataframe that includes the list of all files in that directory and the complete path to each file. As a next step, I `map` over paths and import data using the `read_csv` function. Finally, I `unnest` the result of `map`.
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 full_df = 
   tibble(
     files = list.files("data/zip_data/"),
@@ -76,6 +77,8 @@ This plot suggests high within-subject correlation -- subjects who start above a
 The following code is used to create a simulation function with the following design elements of n = 30 and sigma = 5.
 
 ```{r}
+set.seed(3)
+
 simulation_function = function(n = 30, mu, sigma = 5) {
   
   x = rnorm(n, mean = mu, sd = sigma)
@@ -96,7 +99,7 @@ mu_0_simulation
 
 The following code is a simulation for when mu is equal to 0 through 6, 5000 datasets are generated for each mu, and the estimate and p-value are obtained from a one-sample t-test.
 
-```{r, message = FALSE}
+```{r, message = FALSE, warning = FALSE}
 mu_sim = tibble(mu = c(0,1,2,3,4,5,6)) %>%
   mutate(output = map(.x = mu, ~rerun(5000,
   simulation_function(mu = .x))),
